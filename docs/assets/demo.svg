@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="460" viewBox="0 0 720 460" font-family="Menlo, Consolas, monospace" font-size="14">
+  <rect width="720" height="460" rx="10" fill="#101418"/>
+  <circle cx="24" cy="22" r="6" fill="#ff5f56"/>
+  <circle cx="44" cy="22" r="6" fill="#ffbd2e"/>
+  <circle cx="64" cy="22" r="6" fill="#27c93f"/>
+  <text x="360" y="27" fill="#8b949e" text-anchor="middle" font-size="12">fanline — SSE pub/sub with signed tokens and replay</text>
+  <g fill="#c9d1d9">
+    <text x="24" y="60"><tspan fill="#7ee787">$</tspan> fanline serve --keys main=demo-secret</text>
+    <text x="24" y="82" fill="#8b949e">fanline 0.1.0 listening on http://127.0.0.1:8787 (keys=main, replay=64)</text>
+    <text x="24" y="112"><tspan fill="#7ee787">$</tspan> TOKEN=$(fanline token new --keys main=demo-secret \</text>
+    <text x="24" y="132">    --channel 'orders.**' --cap sub,pub --ttl 24h)</text>
+    <text x="24" y="162"><tspan fill="#7ee787">$</tspan> fanline publish --channel orders.eu --token $TOKEN \</text>
+    <text x="24" y="182">    --event created --data '{"order":4711,"total":"89.90"}'</text>
+    <text x="24" y="204" fill="#8b949e">{"id":"52e7ac0d-1","seq":1,"channel":"orders.eu","subscribers":0}</text>
+    <text x="24" y="226"><tspan fill="#7ee787">$</tspan> fanline publish --channel orders.eu --token $TOKEN \</text>
+    <text x="24" y="246">    --event created --data '{"order":4712,"total":"12.50"}'</text>
+    <text x="24" y="268" fill="#8b949e">{"id":"52e7ac0d-2","seq":2,"channel":"orders.eu","subscribers":0}</text>
+    <text x="24" y="298"><tspan fill="#7ee787">$</tspan> fanline tail --channel orders.eu --token $TOKEN --replay 10</text>
+    <text x="24" y="320" fill="#79c0ff"># connected channel=orders.eu epoch=52e7ac0d replayed=2 gap=false</text>
+    <text x="24" y="344"><tspan fill="#d2a8ff">52e7ac0d-1</tspan>  <tspan fill="#f778ba">created</tspan>  {"order":4711,"total":"89.90"}</text>
+    <text x="24" y="366"><tspan fill="#d2a8ff">52e7ac0d-2</tspan>  <tspan fill="#f778ba">created</tspan>  {"order":4712,"total":"12.50"}</text>
+    <text x="24" y="406" fill="#8b949e">// browsers: new EventSource(`/v1/sse/orders.eu?token=${TOKEN}`)</text>
+    <text x="24" y="428" fill="#8b949e">// reconnect sends Last-Event-ID — missed events replay automatically</text>
+  </g>
+</svg>

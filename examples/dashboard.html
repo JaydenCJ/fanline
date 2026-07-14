@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<!-- fanline demo dashboard: the entire "client SDK" is the EventSource
+     below. Serve a hub with `fanline serve --dev --cors-origin '*'` and
+     feed it with examples/publish-loop.sh, then open this file. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>fanline demo dashboard</title>
+<style>
+  body { font-family: ui-monospace, Menlo, Consolas, monospace; background: #101418; color: #c9d1d9; margin: 2rem; }
+  h1 { font-size: 1.2rem; } h1 span { color: #7ee787; }
+  #status { padding: .4rem .8rem; border-radius: 6px; background: #21262d; display: inline-block; margin-bottom: 1rem; }
+  #status.gap { background: #6e2c00; }
+  #cpu { font-size: 3rem; color: #79c0ff; }
+  table { border-collapse: collapse; margin-top: 1rem; }
+  td, th { padding: .3rem .8rem; border-bottom: 1px solid #30363d; text-align: left; }
+  input { background: #21262d; color: inherit; border: 1px solid #30363d; border-radius: 4px; padding: .3rem; width: 28rem; }
+</style>
+</head>
+<body>
+<h1><span>fanline</span> live dashboard — no client library</h1>
+<p>hub: <input id="url" value="http://127.0.0.1:8787"> token (empty for --dev): <input id="token" value=""> <button onclick="connect()">connect</button></p>
+<div id="status">disconnected</div>
+<div>cpu: <span id="cpu">–</span>%</div>
+<table><thead><tr><th>id</th><th>event</th><th>data</th></tr></thead><tbody id="log"></tbody></table>
+<script>
+let es;
+function connect() {
+  if (es) es.close();
+  const base = document.getElementById("url").value.replace(/\/$/, "");
+  const token = document.getElementById("token").value.trim();
+  const qs = new URLSearchParams({ replay: "10" });
+  if (token) qs.set("token", token); // EventSource cannot set headers
+  es = new EventSource(`${base}/v1/sse/metrics.demo?${qs}`);
+
+  const status = document.getElementById("status");
+  // fanline.ready arrives first on every (re)connect and reports how much
+  // history was replayed — and whether events were lost (gap).
+  es.addEventListener("fanline.ready", (e) => {
+    const r = JSON.parse(e.data);
+    status.textContent = `connected epoch=${r.epoch} replayed=${r.replayed} gap=${r.gap}`;
+    status.classList.toggle("gap", r.gap);
+    if (r.gap) console.warn("history lost — refetch baseline state here");
+  });
+  es.addEventListener("sample", (e) => {
+    const m = JSON.parse(e.data);
+    document.getElementById("cpu").textContent = m.cpu;
+    const row = document.getElementById("log").insertRow(0);
+    row.innerHTML = `<td>${e.lastEventId}</td><td>sample</td><td>${e.data}</td>`;
+    while (document.getElementById("log").rows.length > 8) document.getElementById("log").deleteRow(8);
+  });
+  // On error EventSource reconnects by itself, sending Last-Event-ID;
+  // fanline replays whatever this page missed. Nothing to do here.
+  es.onerror = () => { status.textContent = "reconnecting…"; };
+}
+connect();
+</script>
+</body>
+</html>
